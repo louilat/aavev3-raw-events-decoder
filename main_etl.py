@@ -15,12 +15,15 @@ if raw_events_input_path is None:
     yesterday = datetime(
         yesterday.year, yesterday.month, yesterday.day, tzinfo=timezone.utc
     ).strftime("%Y-%m-%d")
-    raw_events_input_path = f"aave-events-collector/daily-raw-events/raw_events_snapshot_date={yesterday}/raw_events.json"
-    output_path = f"aave-events-collector/daily-decoded-events/decoded_events_snapshot_date={yesterday}/"
+    raw_events_input_path = f"aave-raw-datasource/daily-raw-events/raw_events_snapshot_date={yesterday}/raw_events.json"
+    output_path = f"aave-raw-datasource/daily-decoded-events/decoded_events_snapshot_date={yesterday}/"
 
 
 AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
 AWS_SECRET_KEY = os.environ["AWS_SECRET_KEY"]
+AWS_API_ENDPOINT = "https://minio-simple.lab.groupe-genes.fr"
+BUCKET = "projet-datalab-group-jprat"
+VERIFY = False
 
 print(f"Starting ETL...")
 
@@ -35,13 +38,14 @@ print("Step 1: Fetch raw events data...")
 
 ressource_s3 = boto3.resource(
     "s3",
-    endpoint_url="https://" + "minio.lab.sspcloud.fr",
+    endpoint_url=AWS_API_ENDPOINT,
     aws_access_key_id=AWS_ACCESS_KEY,
     aws_secret_access_key=AWS_SECRET_KEY,
+    verify=VERIFY,
 )
 
 obj = ressource_s3.Object(
-    "llatournerie",
+    BUCKET,
     raw_events_input_path,
 )
 data = obj.get()["Body"].read().decode("utf-8")
@@ -68,9 +72,10 @@ print("Step 6: Uploading files to s3...")
 
 client_s3 = boto3.client(
     "s3",
-    endpoint_url="https://" + "minio.lab.sspcloud.fr",
+    endpoint_url=AWS_API_ENDPOINT,
     aws_access_key_id=AWS_ACCESS_KEY,
     aws_secret_access_key=AWS_SECRET_KEY,
+    verify=VERIFY,
 )
 
 for event_name, output_table in decoder.all_decoded_events_dict.items():
@@ -78,7 +83,7 @@ for event_name, output_table in decoder.all_decoded_events_dict.items():
     output_table.to_csv(buffer, index=False)
     client_s3.put_object(
         Body=buffer.getvalue(),
-        Bucket="llatournerie",
+        Bucket=BUCKET,
         Key=output_path + f"decoded_{event_name}.csv",
     )
 
@@ -86,7 +91,7 @@ buffer = io.StringIO()
 decoder.all_active_users.to_csv(buffer, index=False)
 client_s3.put_object(
     Body=buffer.getvalue(),
-    Bucket="llatournerie",
+    Bucket=BUCKET,
     Key=output_path + f"all_active_users.csv",
 )
 
