@@ -98,10 +98,10 @@ class AaveV3RawEventsDecoder:
 
     def get_all_active_users(self, verbose: bool = False) -> DataFrame:
         active_users_events = {
-            "Borrow": ["onBehalfOf"],  # , "user"],
-            "Supply": ["onBehalfOf"],  # , "user"],
-            "Repay": ["user"],  # , "repayer"],
-            "Withdraw": ["user"],  # "to"],
+            "Borrow": ["onBehalfOf", "user"],
+            "Supply": ["onBehalfOf", "user"],
+            "Repay": ["user", "repayer"],
+            "Withdraw": ["user", "to"],
             "LiquidationCall": ["user", "liquidator"],
             "FlashLoan": ["initiator", "target"],
             "UserEModeSet": ["user"],
