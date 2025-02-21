@@ -12,7 +12,9 @@ class AaveV3TokenTransferDecoder:
         for encoded_event in all_encoded_events:
             decoded_events.append(self._decode_transfer(eval(encoded_event)))
 
-        self.all_decoded_events = pd.json_normalize(decoded_events)
+        transfers = pd.json_normalize(decoded_events)
+        transfers = transfers[transfers["from"] != "0x0000000000000000000000000000000000000000"]
+        self.all_decoded_events = transfers
         return self.all_decoded_events
 
     def _decode_transfer(self, transfer_encoded_event):
